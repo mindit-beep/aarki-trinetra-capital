@@ -1,0 +1,65 @@
+import { useState, useEffect, useCallback } from 'react'
+import { Search, FileText, TrendingUp, Globe, Zap, Building, Plane, Cpu, Leaf, DollarSign, ChevronDown, ChevronUp, ExternalLink, Plus } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/cn'
+
+const SECTOR_META: Record<string, { icon: any; color: string; bg: string }> = {
+  'Real Estate & Strategic Assets': { icon: Building, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  'Investment & Capital Facilitation': { icon: DollarSign, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+  'Renewable Energy & Green Infrastructure': { icon: Leaf, color: 'text-green-600', bg: 'bg-green-50' },
+  'EPC & Infrastructure': { icon: Building, color: 'text-orange-600', bg: 'bg-orange-50' },
+  'DPR, Feasibility & Technical': { icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50' },
+  'Loan & Structured Finance': { icon: DollarSign, color: 'text-amber-600', bg: 'bg-amber-50' },
+  'Aviation & Aerospace': { icon: Plane, color: 'text-purple-600', bg: 'bg-purple-50' },
+  'IT & Digital Infrastructure': { icon: Cpu, color: 'text-cyan-600', bg: 'bg-cyan-50' },
+}
+
+const BUILT_IN_REPORTS = [
+  { id: 'builtin-1', title: 'India Real Estate Market Outlook 2026', sector: 'Real Estate & Strategic Assets', summary: "India's real estate market is projected to reach $1 trillion by 2030. Key drivers include urbanization, RERA compliance, and growing institutional investment. Tier-2 cities are emerging as hotspots.", content: 'Market Size: ~$450B (2026 projection)\nOffice space absorption: 52M sq ft\nResidential sales: 3.2L units in top 7 cities\nFDI inflows: $7.2B in construction\n\nKey Trends:\n1. Tier-2 City Boom — Jaipur, Lucknow, Indore, Coimbatore 40%+ YoY\n2. Logistics & Warehousing — 350M sq ft demand\n3. Hospitality Recovery — RevPAR up 22% vs pre-COVID\n4. Data Center Real Estate — 1.2B sq ft pipeline\n\nFacilitation Opportunities:\n- JDA structuring for Tier-2 landowners\n- Hotel asset transactions\n- Industrial park land aggregation\n- NRI-focused residential projects', source: 'ICRIER, JLL India, CBRE Research', tags: 'real estate, india, tier-2, JDA, NRI, logistics' },
+  { id: 'builtin-2', title: 'Renewable Energy: Solar & Green Hydrogen Opportunities', sector: 'Renewable Energy & Green Infrastructure', summary: 'India targets 500 GW renewable capacity by 2030. Solar tariffs at record lows ₹2.14/kWh. Green Hydrogen Mission creates $8B+ opportunity.', content: 'Solar: 280 GW target by 2030 (current: 85 GW)\nRecord tariffs: ₹2.14/kWh\nRooftop solar: 10 GW annual target\n\nGreen Hydrogen: $2.3B outlay\n5 MMT production target by 2030\n15 GW electrolyzer capacity planned\n\nEV Infrastructure: FAME-III ₹10,000 Cr\n50,000 charging stations by 2028\n\nFacilitation:\n- Investor-EPC matchmaking for solar parks\n- Green hydrogen project structuring\n- PSU coordination for EV infrastructure\n- Carbon credit facilitation', source: 'MNRE, NITI Aayog, IEA India', tags: 'solar, green hydrogen, EV, renewable, PSU, carbon credits' },
+  { id: 'builtin-3', title: 'Infrastructure & EPC: Roads, Logistics & Smart Cities', sector: 'EPC & Infrastructure', summary: 'India infrastructure capex: ₹11.11 lakh crore in 2026-27 budget. Bharatmala Phase-II, Sagarmala expansion, 100 Smart Cities 2.0.', content: 'National Highway: 12,000 km/year target\nBharatmala Phase-II: ₹3.3 lakh crore\n\nLogistics: 35 MMLPs planned\nWarehousing: 350M sq ft by 2027\nCold chain: ₹35,000 Cr opportunity\n\nSmart Cities 2.0: 100 cities\nAnnual budget: ₹16,000 Cr\n\nFacilitation:\n- Investor alignment for HAM/BOT\n- MMLP stakeholder coordination\n- Smart city PMC facilitation\n- International EPC partner matchmaking', source: 'MoRTH, MoHUA, DPIIT', tags: 'roads, highways, logistics, smart cities, HAM, PMC' },
+  { id: 'builtin-4', title: 'Aviation & Aerospace: Airport Infrastructure Boom', sector: 'Aviation & Aerospace', summary: 'India to become 3rd largest aviation market by 2027. 220+ airports by 2030. Airport privatization, MRO, cargo hubs.', content: 'Airports: 148 current → 220+ by 2030\nUDAN scheme: 74 airports\nGreenfield: Navi Mumbai, Jewar, Bhogapuram\n\nMRO market: $4B by 2030\nCargo: 10M MT by 2030\n\nFacilitation:\n- Airport infrastructure investment\n- MRO facility investor alignment\n- Cargo hub stakeholder coordination\n- Aircraft leasing connections', source: 'DGCA, MoCA, IATA India', tags: 'aviation, airports, MRO, cargo, UDAN, PPP' },
+  { id: 'builtin-5', title: 'Capital Markets & Structured Finance Trends', sector: 'Investment & Capital Facilitation', summary: 'AIF industry crosses ₹5 lakh crore. Family office ecosystem expanding. HNI/NRI capital flows at all-time highs.', content: 'AIF AUM: ₹5.2 lakh crore\nCategory II (PE): ₹3.1 lakh crore\n\nFamily offices: 300+ active\nHNI investors: 400,000+ with ₹5Cr+ AUM\nNRI corridor: $18B annually\n\nStructured: CCDs, OCPS, RBF ₹12,000 Cr\n\nFacilitation:\n- HNI-family office-project matchmaking\n- NRI investment facilitation\n- AIF structuring for RE and infra\n- Exit strategy advisory', source: 'SEBI, AMFI, RBI, EY India', tags: 'AIF, family office, HNI, NRI, structured finance, equity' },
+  { id: 'builtin-6', title: 'Digital Infrastructure & Data Center Growth', sector: 'IT & Digital Infrastructure', summary: 'India data center market $12B by 2028. 45+ new facilities. IT parks evolving into tech campuses.', content: 'Data centers: $8.5B (2026) → $12B by 2028\nCapacity: 1.8 GW → 5 GW by 2030\nKey hubs: Mumbai, Chennai, Hyderabad, Pune\n\nIT Parks: 450+ SEZs\nMixed-use evolution\nTier-2: Jaipur, Kochi, Vizag\n\nEnterprise digital: $12B spend\nERP/SAP: $3B market\n\nFacilitation:\n- Data center investor alignment\n- IT park development facilitation\n- ERP implementation partner matching\n- PSU digital transformation', source: 'NASSCOM, MeitY, CII', tags: 'data center, IT park, ERP, digital transformation, cloud' },
+]
+
+interface Report { id: string; title: string; sector: string; summary: string; content: string; source?: string; tags?: string; createdAt?: string }
+const emptyReport = { title: '', sector: '', summary: '', content: '', source: '', tags: '' }
+
+export default function SectorResearch() {
+  const [reports, setReports] = useState<Report[]>([])
+  const [allReports, setAllReports] = useState<Report[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterSector, setFilterSector] = useState('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
+  const [formData, setFormData] = useState(emptyReport)
+
+  const fetchReports = useCallback(async () => { try { const res = await fetch('/api/research-reports'); const data = await res.json(); const db = Array.isArray(data) ? data : data.items ?? data.reports ?? []; setAllReports([...BUILT_IN_REPORTS, ...db]); setReports([...BUILT_IN_REPORTS, ...db]) } catch { setAllReports(BUILT_IN_REPORTS); setReports(BUILT_IN_REPORTS) } }, [])
+  useEffect(() => { fetchReports() }, [fetchReports])
+  useEffect(() => { const filtered = allReports.filter(r => { const matchSearch = !searchQuery || r.title.toLowerCase().includes(searchQuery.toLowerCase()) || r.summary.toLowerCase().includes(searchQuery.toLowerCase()) || r.tags?.toLowerCase().includes(searchQuery.toLowerCase()); const matchSector = filterSector === 'all' || r.sector === filterSector; return matchSearch && matchSector }); setReports(filtered) }, [searchQuery, filterSector, allReports])
+
+  const saveReport = async () => { if (!formData.title || !formData.sector) return; await fetch('/api/research-reports', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }); setShowForm(false); setFormData(emptyReport); fetchReports() }
+  const getSectorMeta = (sector: string) => SECTOR_META[sector] ?? { icon: FileText, color: 'text-gray-600', bg: 'bg-gray-50' }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between"><div><h2 className="text-lg font-semibold">Sector Intelligence</h2><p className="text-sm text-muted-foreground">{reports.length} reports across {Object.keys(SECTOR_META).length} sectors</p></div><Button onClick={() => { setFormData(emptyReport); setShowForm(true) }}><Plus className="h-4 w-4 mr-2" /> Add Report</Button></div>
+      <div className="flex flex-wrap items-center gap-3"><div className="relative flex-1 min-w-[200px]"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search reports, tags, keywords..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" /></div><select value={filterSector} onChange={e => setFilterSector(e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All Sectors</option>{Object.keys(SECTOR_META).map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {reports.map(report => { const meta = getSectorMeta(report.sector); const Icon = meta.icon; const isExpanded = expandedId === report.id; return (
+          <Card key={report.id} className="hover:shadow-md transition-shadow"><CardContent className="p-5 space-y-3"><div className="flex items-start gap-3"><div className={cn('p-2 rounded-lg shrink-0', meta.bg)}><Icon className={cn('h-5 w-5', meta.color)} /></div><div className="flex-1 min-w-0"><h3 className="font-semibold text-sm leading-tight">{report.title}</h3><p className="text-xs text-muted-foreground mt-1">{report.sector}</p></div></div><p className="text-sm text-muted-foreground">{report.summary}</p>{report.tags && <div className="flex flex-wrap gap-1.5">{report.tags.split(',').map((tag, i) => (<Badge key={i} variant="secondary" className="text-[10px]">{tag.trim()}</Badge>))}</div>}{isExpanded && <><Separator /><div className="prose prose-sm max-w-none text-sm whitespace-pre-wrap">{report.content}</div>{report.source && <p className="text-xs text-muted-foreground"><strong>Sources:</strong> {report.source}</p>}</>}<Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => setExpandedId(isExpanded ? null : report.id)}>{isExpanded ? <><ChevronUp className="h-3 w-3 mr-1" /> Show Less</> : <><ChevronDown className="h-3 w-3 mr-1" /> Read Full Report</>}</Button></CardContent></Card>
+        )})}
+      </div>
+      {reports.length === 0 && <Card><CardContent className="p-12 text-center"><FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" /><h3 className="text-lg font-semibold mb-2">No Reports Found</h3><p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p></CardContent></Card>}
+      <Dialog open={showForm} onOpenChange={setShowForm}><DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Add Research Report</DialogTitle></DialogHeader><div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4"><div className="md:col-span-2"><Label>Report Title *</Label><Input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="e.g., India Solar Market Q3 2026" /></div><div><Label>Sector *</Label><select value={formData.sector} onChange={e => setFormData({ ...formData, sector: e.target.value })} className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm mt-1"><option value="">Select sector</option>{Object.keys(SECTOR_META).map(s => <option key={s} value={s}>{s}</option>)}</select></div><div><Label>Source</Label><Input value={formData.source} onChange={e => setFormData({ ...formData, source: e.target.value })} placeholder="e.g., MNRE, CRISIL" /></div><div className="md:col-span-2"><Label>Summary *</Label><Textarea value={formData.summary} onChange={e => setFormData({ ...formData, summary: e.target.value })} placeholder="Brief summary..." rows={3} /></div><div className="md:col-span-2"><Label>Full Content *</Label><Textarea value={formData.content} onChange={e => setFormData({ ...formData, content: e.target.value })} placeholder="Detailed report content..." rows={8} /></div><div className="md:col-span-2"><Label>Tags (comma-separated)</Label><Input value={formData.tags} onChange={e => setFormData({ ...formData, tags: e.target.value })} placeholder="e.g., solar, policy, FDI" /></div></div><div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button><Button onClick={saveReport}>Save Report</Button></div></DialogContent></Dialog>
+    </div>
+  )
+}
