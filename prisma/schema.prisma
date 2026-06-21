@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@map("users")
+}
+
+model Deal {
+  id            String   @id @default(cuid())
+  title         String
+  sector        String
+  description   String?
+  dealValue     String?
+  stage         String   @default("lead")
+  priority      String   @default("medium")
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+  location      String?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  @@map("deals")
+}
+
+model Stakeholder {
+  id            String   @id @default(cuid())
+  name          String
+  type          String
+  company       String?
+  sector        String?
+  email         String?
+  phone         String?
+  location      String?
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  @@map("stakeholders")
+}
+
+model ResearchReport {
+  id            String   @id @default(cuid())
+  title         String
+  sector        String
+  summary       String
+  content       String
+  source        String?
+  tags          String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@map("research_reports")
+}
